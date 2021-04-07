@@ -1,0 +1,3 @@
+[submodule "biocro-dev"]
+	path = biocro-dev
+	url = https://github.com/ebimodeling/biocro-dev.git
