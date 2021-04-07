@@ -56,11 +56,11 @@ for (i in 1:length(year)) {
 
 }
 
-wts2 <- data.frame("Stem" = 1, "Leaf" = 1, "Rep" = 1, "Root" = 0.125)
+wts2 <- data.frame("Stem" = 1, "Leaf" = 1, "Pod" = 1, "Root" = 0.125)
 
 ## Optimization settings
-ul<-50 
-ll<--50
+ul <- 50 
+ll <- -50
 
 # parameter upper limit
 upperlim<-c(ul,ul,ul,
@@ -93,3 +93,6 @@ max.iter <- 1000
 # Call DEoptim function to run optimization
 parVars <- c('multiyear_BioCro_optim','soybean_optsolver','ExpBiomass','numrows','weights','wts2','RootVals')
 optim_result<-DEoptim(fn=cost_func, lower=lowerlim, upper = upperlim, control=list(itermax=max.iter,parallelType=1,packages=c('BioCro'),parVar=parVars))
+
+stopCluster(cl) #close parallel connections
+
