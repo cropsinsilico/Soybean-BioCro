@@ -1,5 +1,7 @@
 library(BioCro)
 
+year <- '2002' # year of weather data to load
+
 # Set a bunch of default values
 def_kick_strength = 0.8
 def_clock_gamma = 0.1
@@ -62,29 +64,19 @@ run_biocro_clock <- function(
 	return(result)
 }
 
-# Run the clock and plot
-# result <- run_biocro_clock(
-# 	def_kick_strength, def_clock_gamma, def_clock_r0, def_clock_period, def_dawn_phase_initial, def_dusk_phase_initial, def_light_threshold,	# Clock parameters
-# 	weather05,																																	# Environmental conditions
-# 	def_solver_method, def_output_step_size, def_adaptive_error_tol, def_adaptive_max_steps,													# Solver parameters
-# 	TRUE																																		# Verbosity
-# )
-year <- '2006'
-weather_data <- read.csv(file = paste0('~/Research/BioCro/SoybeanBioCro/Weather_Data/', year, '/', year, '_Bondville_IL.csv'))
+# Run the clock
+weather_data <- read.csv(file = paste0('./', year, '/', year, '_Bondville_IL.csv'))
 
 result <- run_biocro_clock(
   def_kick_strength, def_clock_gamma, def_clock_r0, def_clock_period, def_dawn_phase_initial, def_dusk_phase_initial, def_light_threshold,	# Clock parameters
   weather_data,																																	# Environmental conditions
   def_solver_method, def_output_step_size, def_adaptive_error_tol, def_adaptive_max_steps,													# Solver parameters
-  TRUE																																		# Verbosity
+  FALSE																																		# Verbosity
 )
 
 weather <- cbind(weather_data, result$day_length)
 colnames(weather)[ncol(weather)] <- 'day_length'
-write.csv(weather, file=paste0('~/Research/BioCro/SoybeanBioCro/Weather_Data/', year, '/', year, '_Bondville_IL_daylength.csv'))
 
-plot(x=result$doy_dbl, y=result$day_length,pch=19)
-
-# photoperiod_plot <- xyplot(day_length ~ doy_dbl, data=result, type='l')
-
-# x11(); print(photoperiod_plot)
+# Create directory if necessary and write weather file
+create.dir(paste0('./',year,'/'), showWarnings = FALSE)
+write.csv(weather, file=paste0('./', year, '/', year, '_Bondville_IL_daylength.csv'))
