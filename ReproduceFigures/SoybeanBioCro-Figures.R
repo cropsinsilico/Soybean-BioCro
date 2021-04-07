@@ -40,7 +40,7 @@ for (i in 1:length(years)) {
   
   yr <- years[i]
   
-  weather <- read.csv(file = paste0('./Weather_Data/', yr, '_Bondville_IL_daylength.csv'))
+  weather <- read.csv(file = paste0('../Data/Weather_data/', yr, '_Bondville_IL_daylength.csv'))
 
   sowdate <- dates$sow[which(dates$year == yr)]
   harvestdate <- dates$harvest[which(dates$year == yr)]
@@ -57,13 +57,13 @@ for (i in 1:length(years)) {
   results.elevCO2[[i]] <- soybean_solver(params.elevCO2)
   
   # Load SoyFACE ambient and elevated CO2 biomass means and standard deviations
-  ExpBiomass[[i]]<-read.csv(file=paste0('./SoyFACE_data/', yr,'_ambient_biomass.csv'))
-  ExpBiomass.std[[i]]<-read.csv(file=paste0('./SoyFACE_data/', yr,'_ambient_biomass_std.csv'))
+  ExpBiomass[[i]]<-read.csv(file=paste0('../Data/SoyFACE_data/', yr,'_ambient_biomass.csv'))
+  ExpBiomass.std[[i]]<-read.csv(file=paste0('../Data/SoyFACE_data/', yr,'_ambient_biomass_std.csv'))
   colnames(ExpBiomass[[i]])<-c("DOY","Leaf","Stem","Pod")
   colnames(ExpBiomass.std[[i]])<-c("DOY","Leaf","Stem","Pod")
   
-  ExpBiomass.elevCO2[[i]]<-read.csv(file = paste0('./SoyFACE_data/',yr,'_co2_biomass.csv'))
-  ExpBiomass.std.elevCO2[[i]]<-read.csv(file = paste0('./SoyFACE_data/',yr,'_co2_biomass_std.csv'))
+  ExpBiomass.elevCO2[[i]]<-read.csv(file = paste0('../Data/SoyFACE_data/',yr,'_co2_biomass.csv'))
+  ExpBiomass.std.elevCO2[[i]]<-read.csv(file = paste0('../Data/SoyFACE_data/',yr,'_co2_biomass_std.csv'))
   colnames(ExpBiomass.elevCO2[[i]])<-c("DOY","Leaf","Stem","Pod")
   colnames(ExpBiomass.std.elevCO2[[i]])<-c("DOY","Leaf","Stem","Pod")
   
