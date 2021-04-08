@@ -2,7 +2,13 @@
 The weather data used for this model comes from the <a href=https://www.esrl.noaa.gov/gmd/grad/surfrad/>SURFRAD (NOAA-ESRL surface radiation)</a> and <a href=https://www.isws.illinois.edu/warm/>WARM (Illinois Water and Atmospheric Resources Monitoring Program)</a> datasets.
 
 
-The function weather_processing.R is used to collate the SURFRAD and WARM data into a format for BioCro.
+The script `get_weather_files.R` collates the SURFRAD and WARM data for a given year into a format for BioCro. This script calls the following functions:
+- `surfrad.weather.processing()` located in the `SURFRAD_weather_processing.R` file
+- `WARM.precipitation()` located in the `WARM_precipitation.R` file
+- `get_day_length()` located in the `day_length_script.R` file
+
+`get_day_length()` calculates the day length using the oscillator clock function in BioCro (Lochocki and McGrath 2021, https://doi.org/10.1093/insilicoplants/diab016). Alternatively, day length can be calculated using celestial mechanic functions (Keisling 1982,  https://doi.org/10.2134/agronj1982.00021962007400040036x).
+
 
 ## SURFRAD Data
 Site: Bondville, IL (40.0519 N, 88.3731 W; ~7 miles west of SoyFACE Farm)
@@ -88,26 +94,3 @@ Need to output if an excess of days are missing.
 
 #### Temperature, Relative Humidity, Windspeed
 If within a day, take average of previous known timepoint and next known timepoint.
-
-### Missing Data
-
-
-## R Code for Weather Data Processing
-### Processing the SURFRAD data - SURFRAD_weather_processing.R
-#### Function: surfrad.weather.processing(date.range.input, site.name, site.shortname, time.change, output.filename)
-
-
-##### Function: impute_data_avg(data, inds)
-
-
-##### Function: impute_data_avg_solar(data, inds)
-
-
-##### Function: imputed.msg(inds, param, type, table, filename)
-
-
-##### Function: get.date.range(date.range.input)
-
-
-### Processing the WARM data for precipitation - WARM_precipitation.R
-#### Function: WARM.precipitation(table, weather.warm, time.range)
