@@ -19,7 +19,7 @@ impute_data_avg <- function(data, inds, consec.thresh) {
   consec.inds.start <- c(1, consec.inds.jump+1)
   consec.inds.end <- c(consec.inds.jump, length(inds))
   
-  # Check for length of consecutive missing values. If greater than some number (e.g., 12?) then do the solar averaging steps)
+  # Check for length of consecutive missing values. If greater than consec.thresh then do the solar averaging steps)
   consec.num <- 1 + consec.inds.end - consec.inds.start
   
   inds.dayavg <- which(consec.num > consec.thresh)
