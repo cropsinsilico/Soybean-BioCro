@@ -1,6 +1,7 @@
 library(BioCro)
 library(ggplot2) # To ggplot functions
 library(reshape2) # For melt function
+library(data.table) # for first and last functions
 
 
 # Clear workspace
