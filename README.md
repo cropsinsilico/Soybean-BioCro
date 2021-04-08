@@ -8,6 +8,11 @@ The version of BioCro associated with this manuscript is included as a submodule
 
 See the BioCro README to install BioCro.
 
-This code was developed and tested on Mac OS version 10.14.6, with R version 3.6.1 and Rstudio version 1.2.1335.
+To run an example run of Soybean-BioCro use the following command after installing the BioCro package:
+
+`result <- Gro_solver(soybean_initial_state, soybean_parameters, soybean_weather2002, soybean_steadystate_modules, soybean_derivative_modules, soybean_solver_params)`
+
+
+The code in this repository was developed and tested on Mac OS version 10.14.6, with R version 3.6.1 and Rstudio version 1.2.1335.
 
 
