@@ -2,21 +2,20 @@ library(BioCro)
 # Ref for oscillator clock: Lochocki and McGrath 2021, https://doi.org/10.1093/insilicoplants/diab016
 
 # Set a bunch of default values
-def_kick_strength = 0.8
-def_clock_gamma = 0.1
-def_clock_r0 = 1.5
-def_clock_period = 24.0
-def_dawn_phase_initial = 200.0
-def_dusk_phase_initial = 80.0
-def_light_threshold = 60.0
-def_solver_method = "Gro_rkck54"
-def_output_step_size = 1.0
-def_adaptive_rel_error_tol = 1e-6
 def_adaptive_abs_error_tol = 1e-6
 def_adaptive_max_steps = 200
-def_tracker_rate = 4.6
+def_adaptive_rel_error_tol = 1e-6
+def_clock_gamma = 0.1
+def_clock_period = 24.0
+def_clock_r0 = 1.5
+def_dawn_phase_initial = 200.0
+def_dusk_phase_initial = 80.0
+def_kick_strength = 0.8
 def_light_exp_at_zero = 10.0
-
+def_light_threshold = 60.0
+def_output_step_size = 1.0
+def_solver_method = "Gro_rkck54"
+def_tracker_rate = 4.6
 
 # Make a function to run the clock
 run_biocro_clock <- function(
