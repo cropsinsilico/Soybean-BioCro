@@ -94,5 +94,5 @@ max.iter <- 1000
 parVars <- c('multiyear_BioCro_optim','soybean_optsolver','ExpBiomass','numrows','weights','wts2','RootVals')
 optim_result<-DEoptim(fn=cost_func, lower=lowerlim, upper = upperlim, control=list(itermax=max.iter,parallelType=1,packages=c('BioCro'),parVar=parVars))
 
-stopCluster(cl) #close parallel connections
+stopCluster() #close parallel connections
 
