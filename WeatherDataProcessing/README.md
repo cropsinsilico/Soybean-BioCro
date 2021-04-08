@@ -9,6 +9,8 @@ The script `get_weather_files.R` collates the SURFRAD and WARM data for a given 
 
 `get_day_length()` calculates the day length using the oscillator clock function in BioCro (Lochocki and McGrath 2021, https://doi.org/10.1093/insilicoplants/diab016). Alternatively, day length can be calculated using celestial mechanic functions (Keisling 1982,  https://doi.org/10.2134/agronj1982.00021962007400040036x).
 
+`get_day_length()` requires the BioCro library to be installed.
+
 
 ## SURFRAD Data
 Site: Bondville, IL (40.0519 N, 88.3731 W; ~7 miles west of SoyFACE Farm)
