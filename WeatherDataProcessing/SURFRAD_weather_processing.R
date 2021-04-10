@@ -400,7 +400,7 @@ timediff <- time.change # e.g., -6 for 6 hours behind for central standard time
 table.year.localtime <- table.year.hour
 utc <- table.year.hour$doy + table.year.hour$hour / 24
 localtime <- utc + timediff / 24
-localtime.doy <- floor(round(localtime,10))
+localtime.doy <- floor(localtime+1e-15) # + 1e-15 is to prevent any floating point issues
 localtime.hour <- round((localtime-localtime.doy) * 24, 0) # round to make it an integer
 localtime.year <- table.year.localtime$year
 
