@@ -1,4 +1,4 @@
 [submodule "biocro"]
 	path = biocro
 	url = https://github.com/ebimodeling/biocro.git
-	branch = soybean
+	tag = soybean_1.0
