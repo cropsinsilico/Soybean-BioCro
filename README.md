@@ -1,12 +1,12 @@
 # Soybean-BioCro
 
-The code in this repository reproduces the results in Matthews et al. Soybean-BioCro: A semi-mechanistic model of soybean growth.
+The code in this repository reproduces the results in Matthews et al. Soybean-BioCro: A semi-mechanistic model of soybean growth. Submitted to in silico Plants.
 
 The version of BioCro associated with this manuscript is included as a submodule in this repository. To clone this repository with the submodule using the following github command:
 
 `git clone --recurse-submodules https://github.com/cropsinsilico/Soybean-BioCro.git`
 
-See the BioCro README to install BioCro.
+See the [BioCro README](https://github.com/ebimodeling/biocro/tree/5cbccbf9f0832e2a2be0a91a41a3f7048782b3cb#readme) to install BioCro.
 
 To run an example run of Soybean-BioCro use the following command after installing the BioCro package:
 
