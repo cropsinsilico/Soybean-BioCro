@@ -1,3 +1,7 @@
 [submodule "biocro-dev"]
 	path = biocro-dev
 	url = https://github.com/ebimodeling/biocro-dev.git
+[submodule "biocro"]
+	path = biocro
+	url = https://github.com/ebimodeling/biocro.git
+	branch = soybean
