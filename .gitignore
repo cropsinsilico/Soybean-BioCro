@@ -1,3 +1,9 @@
+# Output files
+ReproduceFigures/figs
+WeatherDataProcessing/*/
+ParameterOptimization/*.rda
+
+
 # History files
 .Rhistory
 .Rapp.history
