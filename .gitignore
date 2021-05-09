@@ -3,6 +3,10 @@ ReproduceFigures/figs
 WeatherDataProcessing/*/
 ParameterOptimization/*.rda
 
+#everything 
+Sensitivity_run/*
+#except
+!Sensitivity_run/*.R
 
 # History files
 .Rhistory
