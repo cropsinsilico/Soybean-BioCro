@@ -7,7 +7,9 @@ ParameterOptimization/*.rda
 Sensitivity_run/*
 #except
 !Sensitivity_run/*.R
-
+!Sensitivity_run/**/
+Sensitivity_run/YH_figs/*
+!Sensitivity_run/YH_figs/*.R
 # History files
 .Rhistory
 .Rapp.history

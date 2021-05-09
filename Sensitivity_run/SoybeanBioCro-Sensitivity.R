@@ -1,9 +1,4 @@
 library(BioCroSoyBean)
-library(ggplot2) # To ggplot functions
-library(reshape2) # For melt function
-library(data.table) # For first and last functions
-
-
 # Clear workspace
 rm(list=ls())
 
@@ -27,45 +22,36 @@ dates <- data.frame("year" = c(2002, 2004:2006),"sow" = c(152,149,148,148), "har
 # results <- list()
 # results.elevCO2 <- list()
 weather.growingseason <- list()
-ExpBiomass <- list()
-ExpBiomass.std <- list()
-ExpBiomass.elevCO2 <- list()
-ExpBiomass.std.elevCO2 <- list()
 
 # for partial_gro_solver
 arg_names <- c('Catm') # atmospheric CO2 parameter
-#params.ambient <- c(372) # ambient atmospheric CO2
-#params.elevCO2 <- c(550) # elevated atmospheric CO2
-CO2s <- c(380,550,800)
-solar_threshold = 10
+CO2s <- 550#c(380,550,800)
+solar_threshold = 10 #to get the daytime
 no_layers = 10
-doys = c(180,220,260)
+doys = c(180,220,260) #specfic doy to investigate
+#varying vmax & jmax from -50% to +50%
 v_scaler = seq(0.5,1.5,by=0.1) 
 j_scaler = seq(0.5,1.5,by=0.1) 
 
 soybean_para0 = soybean_parameters
 soybean_para  = soybean_parameters
+#init outputs
 podmass     = array(NaN,c(length(v_scaler),length(j_scaler),length(years),length(doys)))    
 shootmass   = array(NaN,c(length(v_scaler),length(j_scaler),length(years),length(doys)))    
 total_assim = array(NaN,c(length(v_scaler),length(j_scaler),length(years),length(doys)))    
-layer_assim_sunlit = array(NaN,c(length(v_scaler),length(j_scaler),length(years),no_layers)) #mean?
-layer_assim_shaded = array(NaN,c(length(v_scaler),length(j_scaler),length(years),no_layers)) #mean?
-Ci_sunlit          = array(NaN,c(length(v_scaler),length(j_scaler),length(years),no_layers)) #mean?
-Ci_shaded          = array(NaN,c(length(v_scaler),length(j_scaler),length(years),no_layers)) #mean?
 
-#podmass_elevCO2     = array(NaN,c(length(v_scaler),length(j_scaler),length(years),length(doys)))    
-#shootmass_elevCO2   = array(NaN,c(length(v_scaler),length(j_scaler),length(years),length(doys)))    
-#total_assim_elevCO2 = array(NaN,c(length(v_scaler),length(j_scaler),length(years),length(doys)))    
-#layer_assim_sunlit_elevCO2 = array(NaN,c(length(v_scaler),length(j_scaler),length(years),no_layers)) #mean?
-#layer_assim_shaded_elevCO2 = array(NaN,c(length(v_scaler),length(j_scaler),length(years),no_layers)) #mean?
-#Ci_sunlit_elevCO2          = array(NaN,c(length(v_scaler),length(j_scaler),length(years),no_layers)) #mean?
-#Ci_shaded_elevCO2          = array(NaN,c(length(v_scaler),length(j_scaler),length(years),no_layers)) #mean?
+total_assim_dmax = array(NaN,c(length(v_scaler),length(j_scaler),length(years))) #mean of daily max    
+layer_assim_sunlit = array(NaN,c(length(v_scaler),length(j_scaler),length(years),no_layers)) 
+layer_assim_shaded = array(NaN,c(length(v_scaler),length(j_scaler),length(years),no_layers)) 
+Ci_sunlit          = array(NaN,c(length(v_scaler),length(j_scaler),length(years),no_layers)) #mean 
+Ci_shaded          = array(NaN,c(length(v_scaler),length(j_scaler),length(years),no_layers)) 
 
 for (CO2 in CO2s){
+t0 = Sys.time()
 for (i in 1:length(years)) {
-  
   yr <- years[i]
-  
+  print(paste("processing year",yr)) 
+
   weather <- read.csv(file = paste0('../Data/Weather_data/', yr, '_Bondville_IL_daylength.csv'))
 
   sowdate <- dates$sow[which(dates$year == yr)]
@@ -75,7 +61,7 @@ for (i in 1:length(years)) {
   
   weather.growingseason[[i]] <- weather[sd.ind:hd.ind,]
   solar = weather.growingseason[[i]]$solar 
-  daytime_ind = which(solar>solar_threshold)
+  daytime_ind = which(solar>solar_threshold) #look at daytime only
 
   for (j in 1:length(j_scaler)){
   for (k in 1:length(v_scaler)){
@@ -84,16 +70,19 @@ for (i in 1:length(years)) {
   	soybean_solver <- partial_gro_solver(soybean_initial_state, soybean_para, weather.growingseason[[i]],
                                        soybean_steadystate_modules, soybean_derivative_modules,
                                        arg_names, soybean_solver_params)
-        results         <- soybean_solver(params.ambient)
-        results_elevCO2 <- soybean_solver(params.elevCO2)
+        results         <- soybean_solver(CO2)
+        canopy_assim = results[,"canopy_assimilation_rate"]
         cname = colnames(results)
-        sunlit_index = grep("^sunlit_Assim.*", cname) 
+        sunlit_index = grep("^sunlit_Assim.*", cname) #matching all sunlit assim 
         shaded_index = grep("^shaded_Assim.*", cname) 
         if(length(sunlit_index) != no_layers || length(shaded_index) !=no_layers){
            stop("results issues!?")
         }
-        layer_assim_sunlit[k,j,i,] = apply(results[,sunlit_index],c(2),mean,na.rm=TRUE) #apply mean for each layer
-        layer_assim_shaded[k,j,i,] = apply(results[,shaded_index],c(2),mean,na.rm=TRUE) #apply mean for each layer
+#        layer_assim_sunlit[k,j,i,] = apply(results[,sunlit_index],c(2),mean,na.rm=TRUE) #apply mean for each layer
+#        layer_assim_shaded[k,j,i,] = apply(results[,shaded_index],c(2),mean,na.rm=TRUE) #apply mean for each layer
+        assim_sunlit = results[,sunlit_index]
+        assim_shaded = results[,shaded_index]
+
         sunlit_index_Ci = grep("^sunlit_Ci_layer.*", cname)
         shaded_index_Ci = grep("^shaded_Ci_layer.*", cname)
         if(length(sunlit_index_Ci) != no_layers || length(shaded_index_Ci) !=no_layers){
@@ -107,6 +96,33 @@ for (i in 1:length(years)) {
         tmp = tmp[daytime_ind,] 
         Ci_shaded[k,j,i,] = apply(tmp,c(2),mean,na.rm=TRUE) #apply mean for each layer
 
+        DOY = results[,"doy"]
+        doy_unique = unique(DOY)
+#for assimilation, we calculate the MEAN of DAILY MAX! 
+#use a simple loop for now. Using matrix operation can speed this up
+        canopy_assim_dmax = c()
+        assim_sunlit_dmax = c()
+        assim_shaded_dmax = c()
+        for (ss in 1:length(doy_unique)){
+            d_ss = doy_unique[ss]
+            doy_ind = which(DOY==d_ss)
+            canopy_assim_dmax = c(canopy_assim_dmax,max(canopy_assim[doy_ind],na.rm=TRUE))
+            tmp = apply(assim_sunlit[doy_ind,],2,max,na.rm=TRUE) #get the daily max of each layer
+            if(length(tmp) != no_layers) stop("bug1")
+            assim_sunlit_dmax = cbind(assim_sunlit_dmax,tmp)
+            tmp = apply(assim_shaded[doy_ind,],2,max,na.rm=TRUE) #get the daily max of each layer
+            assim_shaded_dmax = cbind(assim_shaded_dmax,tmp)
+        }
+        total_assim_dmax[k,j,i] = mean(canopy_assim_dmax,na.rm=TRUE)
+        layer_assim_sunlit[k,j,i,] = rowMeans(assim_sunlit_dmax,na.rm=TRUE)
+        layer_assim_shaded[k,j,i,] = rowMeans(assim_shaded_dmax,na.rm=TRUE)
+        if(min(layer_assim_shaded,na.rm=TRUE) < (-100)){
+           print(dim(assim_shaded_dmax))
+           print(assim_shaded_dmax[1:5,1:10])
+           print(which(layer_assim_shaded < (-100),arr.ind=TRUE))
+           stop()
+        }
+
         if(any(is.na(layer_assim_shaded[k,j,i,]))){
               print(c(k,j,i))
               saveRDS(results,"results_nan.rds")
@@ -116,96 +132,28 @@ for (i in 1:length(years)) {
               print(c(j_scaler[j], v_scaler[k]))
               stop()
         }
-        total_assim[k,j,i,1] = mean(results[,"canopy_assimilation_rate"],na.rm=TRUE)
-        total_assim[k,j,i,2] = max(results[,"canopy_assimilation_rate"],na.rm=TRUE)
-        DOY = results[,"doy"]
+#for biomass and canoy_assim we save the values on those specfic doys
         for (dd in 1:length(doys)){
              doy_ind = which(DOY==doys[dd])
              grain = results[,"Grain"]
              podmass[k,j,i,dd] = max(grain[doy_ind])
              aboveground_mass = results[,"Grain"]+results[,"Leaf"]+results[,"Stem"]
              shootmass[k,j,i,dd] = max(aboveground_mass[doy_ind]) 
-             canopy_assim = results[,"canopy_assimilation_rate"]
              total_assim[k,j,i,dd] = max(canopy_assim[doy_ind])
         }
 
-        cname = colnames(results_elevCO2)
-        sunlit_index = grep("^sunlit_Assim.*", cname) 
-        shaded_index = grep("^shaded_Assim.*", cname) 
-        layer_assim_sunlit_elevCO2[k,j,i,] = apply(results_elevCO2[,sunlit_index],c(2),mean,na.rm=TRUE)
-        layer_assim_shaded_elevCO2[k,j,i,] = apply(results_elevCO2[,shaded_index],c(2),mean,na.rm=TRUE)
-        sunlit_index_Ci = grep("^sunlit_Ci_layer.*", cname)
-        shaded_index_Ci = grep("^shaded_Ci_layer.*", cname)
-        if(length(sunlit_index_Ci) != no_layers || length(shaded_index_Ci) !=no_layers){
-           stop("results issues!?")
-        }
-#        Ci_sunlit_elevCO2[k,j,i,] = apply(results_elevCO2[,sunlit_index_Ci],c(2),mean) #apply mean for each layer
-#        Ci_shaded_elevCO2[k,j,i,] = apply(results_elevCO2[,shaded_index_Ci],c(2),mean) #apply mean for each layer
-        tmp = results_elevCO2[,sunlit_index_Ci]
-        tmp = tmp[daytime_ind,] 
-        Ci_sunlit_elevCO2[k,j,i,] = apply(tmp,c(2),mean,na.rm=TRUE) #apply mean for each layer
-        tmp = results_elevCO2[,shaded_index_Ci]
-        tmp = tmp[daytime_ind,] 
-        Ci_shaded_elevCO2[k,j,i,] = apply(tmp,c(2),mean,na.rm=TRUE) #apply mean for each layer
-        DOY = results_elevCO2[,"doy"]
-        for (dd in 1:length(doys)){
-             doy_ind = which(DOY==doys[dd])
-             grain = results_elevCO2[,"Grain"]
-             podmass_elevCO2[k,j,i,dd] = max(grain[doy_ind])
-             aboveground_mass = results_elevCO2[,"Grain"]+results_elevCO2[,"Leaf"]+results_elevCO2[,"Stem"]
-             shootmass_elevCO2[k,j,i,dd] = max(aboveground_mass[doy_ind]) 
-             canopy_assim = results_elevCO2[,"canopy_assimilation_rate"]
-             total_assim_elevCO2[k,j,i,dd] = max(canopy_assim[doy_ind])
-        }
   #      print(which(cname=="sunlit_Assim_layer_0"))
   #      print(which(cname=="shaded_Assim_layer_0"))
   #      saveRDS(results,"results_example.rds")
-        rm(soybean_solver)
+        rm(soybean_solver)  #make sure the solver is properly cleaned
   } 
   } 
 }
+
+t1 = Sys.time()
+print(t1-t0)
+#save the output for fast plotting
+X1 = list(layer_assim_sunlit,layer_assim_shaded,total_assim,podmass,shootmass,Ci_sunlit,Ci_shaded,total_assim_dmax)
+saveRDS(X1,file=paste("results_rds/results_CO2_",CO2,".rds",sep=""))
 }
 
-X1 = list(layer_assim_sunlit,layer_assim_shaded,total_assim,podmass,shootmass,Ci_sunlit,Ci_shaded)
-saveRDS(X1,file="results_AmbCO2.rds")
-X1 = list(layer_assim_sunlit_elevCO2,layer_assim_shaded_elevCO2,total_assim_elevCO2,podmass_elevCO2,shootmass_elevCO2,Ci_sunlit_elevCO2,Ci_shaded_elevCO2)
-saveRDS(X1,file="results_EleCO2.rds")
-
-stop("ALLO1")
-
-
-
-calc_diff<-function(res1,res2,varname,method){
-    x1 = res1[,varname]
-    x2 = res2[,varname]
-    xdiff = x2-x1
-    xdiff_percentage = (x2-x1)/x1*100
-    if(method=="last"){
-       return(xdiff_percentage[length(xdiff)])
-    }else if(method=="max"){
-       return(max(xdiff_percentage))
-    }else if(method=="mean"){
-       return(mean(xdiff_percentage))
-    }else if(method=="min"){
-       return(min(xdiff_percentage))
-    }
-}
-
-difference = array(NaN,c(4,length(years)))
-plot_list = list()
-varname = "Grain"
-method  = "last"
-for (i in 1:length(years)){
-    year_i = years[i]
-    Fig_AmbCO2 <- plot_all_tissues(results[[i]],results[[i+length(years)]], year_i, ExpBiomass[[1]], ExpBiomass.std[[1]],"AmbCO2")
-    Fig_EleCO2 <- plot_all_tissues(results.elevCO2[[i]],results.elevCO2[[i+length(years)]], year_i, ExpBiomass[[1]], ExpBiomass.std[[1]],"EleCO2")
-    tmp1 = calc_diff(results[[i]],results[[i+length(years)]],varname,method)
-    tmp2 = calc_diff(results.elevCO2[[i]],results.elevCO2[[i+length(years)]],varname,method)
-    difference[,i] = c(tmp1,tmp2) 
-    plot_list[[i]] = Fig_AmbCO2 
-    plot_list[[length(years)+i]] = Fig_EleCO2 
-}
-write.csv(difference,"diff.csv")
-pdf("Fig_sensitivity.pdf",width=16)
-grid.arrange(grobs = plot_list,nrow=2,ncol=length(years))
-dev.off()

@@ -6,7 +6,11 @@ plot_contour<-function(x,y,data,var_name,cbar_limit){
     colnames(df) = c("vmax","jmax","z")
     v<-ggplot(df,aes(x=vmax,y=jmax,z=z,fill=z))+geom_contour_filled()+ 
        geom_tile()+
-       scale_fill_distiller(name=var_name,palette = "Spectral",limits = cbar_limit)
+       scale_fill_distiller(name=var_name,palette = "Spectral",limits = cbar_limit)+
+       theme(axis.text=element_text(size=14),
+             axis.title=element_text(size=14,face="bold"),
+             legend.text=element_text(size=14),
+             legend.title=element_text(size=14))
 #       scale_fill_distiller(name=var_name,palette = "RdBu",limits = cbar_limit)
 
 }
