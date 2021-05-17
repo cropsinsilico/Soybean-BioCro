@@ -2,6 +2,8 @@ library(gridExtra)
 library(lattice)
 library(reshape2)
 library(ggplot2) # To ggplot functions
+library(metR)
+library(akima)
 
 calc_difference<-function(x1,x0){
 
@@ -13,14 +15,31 @@ calc_difference<-function(x1,x0){
 }
 
 source("../plot_functions.R")
-CO2s <- c(380,550,800)
-i = 3
-CO2_case = CO2s[i] 
+CO2s <- c(380,550,800,1000)
+years <- c('2002','2004','2005','2006')
+doys = c(180,220,260)
+no_layers = 10
+v_scaler = seq(0.5,1.5,by=0.1) 
+j_scaler = seq(0.5,1.5,by=0.1) 
+doy_to_plot = 260
+doy_ind = which(doys==doy_to_plot)
+
+barplot_output=c()
+for (CO2 in CO2s){
+   barplot_output = rbind(barplot_output,data.frame(year = years,CO2 = CO2))
+} 
+num_vars = 5 #pod, shoot, A_dmax, A_dmean, A_sum
+array_init = array(NaN,c(dim(barplot_output)[1],num_vars))
+colnames(array_init)=c("pod", "shoot", "A_dmax", "A_dmean", "A_sum")
+barplot_output = cbind(barplot_output,array_init)
+
+for (ii in 1:length(CO2s)){
+CO2_case = CO2s[ii] 
 X1 = readRDS(paste("../results_rds/results_CO2_",CO2_case,".rds",sep=""))
 total_assim_all = X1[[3]] #these are at specfic days
 podmass_all     = X1[[4]] #these are at specfic days
 shootmass_all   = X1[[5]] #these are at specfic days
-total_assim_dmax = X1[[8]]  #array(NaN,c(length(v_scaler),length(j_scaler),length(years)))
+total_assim_dmax = X1[[8]]  #array(NaN,c(length(v_scaler),length(j_scaler),length(years),3))
 
 layer_assim_sunlit = X1[[1]]  #array(NaN,c(length(v_scaler),length(j_scaler),length(years),10))
 layer_assim_shaded = X1[[2]]  #array(NaN,c(length(v_scaler),length(j_scaler),length(years),10))
@@ -33,15 +52,6 @@ Ci_shaded = X1[[7]]  #array(NaN,c(length(v_scaler),length(j_scaler),length(years
 #print(c(min(layer_assim_shaded[,,2,2]),max(layer_assim_shaded[,,2,2])))
 #print(layer_assim_shaded[,,2,2])
 #stop()
-
-doys = c(180,220,260)
-no_layers = 10
-v_scaler = seq(0.5,1.5,by=0.1) 
-j_scaler = seq(0.5,1.5,by=0.1) 
-years <- c('2002','2004','2005','2006')
-doy_to_plot = 260
-doy_ind = which(doys==doy_to_plot)
-
 podmass = podmass_all[,,,doy_ind]
 podmass_diff = podmass
 shootmass = shootmass_all[,,,doy_ind]
@@ -57,13 +67,18 @@ for (k in 1:length(v_scaler)){
    shootmass_diff[k,j,] = (shootmass[k,j,] - x0)/x0*100  
    x0 = total_assim[6,6,]
    total_assim_diff[k,j,] = (total_assim[k,j,] - x0)/x0*100  
-   x0 = total_assim_dmax[6,6,]
-   total_assim_dmax_diff[k,j,] = (total_assim_dmax[k,j,] - x0)/x0*100  
+   x0 = total_assim_dmax[6,6,,]
+
+   total_assim_dmax_diff[k,j,,] = (total_assim_dmax[k,j,,] - x0)/x0*100  
 }
 }
+#print(total_assim_dmax[6,6,,])
+#print(total_assim_dmax[8,8,,])
+#print(total_assim_dmax_diff[8,8,,])
 #print(c(min(total_assim_diff),max(total_assim_diff)))
 #stop()
-list_diff = list(podmass_diff,shootmass_diff,total_assim_diff,total_assim_dmax_diff)
+#list_diff = list(podmass_diff,shootmass_diff,total_assim_diff,total_assim_dmax_diff)
+list_diff = list(podmass_diff,shootmass_diff,total_assim_diff,total_assim_dmax_diff[,,,1],total_assim_dmax_diff[,,,2],total_assim_dmax_diff[,,,3])
 
 layer_assim_sunlit_diff = layer_assim_sunlit
 layer_assim_shaded_diff = layer_assim_shaded
@@ -100,16 +115,21 @@ print(c(min(total_assim_dmax_diff),max(total_assim_dmax_diff)))
 #stop()
 
 cbar_limit = c(-30,10)
-var2plot = c("POD","SHOOT","ASSIM","A_DMAX")
+#var2plot = c("POD","SHOOT","ASSIM","A_DMAX")
+var2plot = c("POD","SHOOT","A_DMAX","A_DMEAN","A_SUM")
 plot_list = list()
 for (j in 1:length(var2plot)){
         varname = var2plot[j]
         var_diff = list_diff[[j]]
-        if(j==3) cbar_limit = c(-40,40)
-        if(j==4) cbar_limit = c(-20,20)
+#        if(j==3) cbar_limit = c(-40,40)
+#        if(j==4) cbar_limit = c(-20,20)
 	for (i in 1:length(years)){
 	    year_i = years[i]
 	    fig_i = plot_contour(v_scaler,j_scaler,var_diff[,,i],varname,cbar_limit)
+#Adding the max gradient line
+            xy_trace = gradient_desc(v_scaler,j_scaler,var_diff[,,i],1) #1: descent; 2: ascent
+            new_df = as.data.frame(xy_trace)
+            fig_i <- fig_i+ geom_point(data = new_df,aes(x=V1,y=V2),inherit.aes = FALSE)
             fig_order = i+ (j-1) * length(years)
 	    plot_list[[fig_order]] = fig_i 
 	}
@@ -118,26 +138,53 @@ v_use = 1.2
 j_use = 1.2
 v_index = which(abs(v_scaler-v_use)<1e-10)
 j_index = which(abs(j_scaler-j_use)<1e-10)
-csv_output = cbind(podmass_diff[v_index,j_index,],shootmass_diff[v_index,j_index,],total_assim_dmax_diff[v_index,j_index,])
-write.csv(csv_output,paste("diff_",CO2_case,".csv",sep=""))
-pdf(paste("Fig_CO2_",CO2_case,"_doy",doy_to_plot,".pdf",sep=""),height = 24, width=24)
+
+pdf(paste("Fig_CO2_",CO2_case,"_doy",doy_to_plot,"_asc.pdf",sep=""),height = 24, width=24)
 grid.arrange(grobs = plot_list,nrow=length(var2plot),ncol=length(years))
 dev.off()
 
-#Look at the diagonal,averaged all years
+tmp0 = cbind(podmass_diff[v_index,j_index,],shootmass_diff[v_index,j_index,],total_assim_dmax_diff[v_index,j_index,,])
+barplot_output[barplot_output$CO2 == CO2_case,-c(1,2)] = tmp0 
+#write.csv(csv_output,paste("diff_",CO2_case,".csv",sep=""))
+
+#if(ii==1) z_gd = total_assim_dmax_diff[,,1,2] 
+
+}#end for CO2s
+
+#bar plot
+#saveRDS(barplot_output,"barplot_output.rds")
+pdfname = "barplot1.pdf"
+#barplot(barplot_output,pdfname)
+
+
+#gradient descent
+#cbar_limit = c(-30,10) 
+#var_name = "A_DMEAN" 
+#xy_trace = gradient_desc(v_scaler,j_scaler,z_gd,2)
+#new_df = as.data.frame(xy_trace)
+##saveRDS(xy_trace,"xy_trace.rds")
+#p = plot_contour(v_scaler,j_scaler,z_gd,var_name,cbar_limit)
+#p <- p + geom_point(data = new_df,aes(x=V1,y=V2),inherit.aes = FALSE)
+#pdf(paste("Fig_CO2_",CO2_case,"_gd.pdf",sep=""),height = 12, width=12)
+#print(p)
+##grid.arrange(grobs = plot_list,nrow=length(var2plot),ncol=length(years))
+#dev.off()
+stop()
+
+#Look at the diagonal or horizontal,averaged all years
 pod_diag = c()
 shoot_diag = c()
 Admax_diag = c()
 for (i in 1:length(v_scaler)){
-   tmp = mean(podmass_diff[i,i,],na.rm=TRUE)
+   tmp = mean(podmass_diff[i,6,],na.rm=TRUE)
    pod_diag = c(pod_diag,tmp) 
-   tmp = mean(shootmass_diff[i,i,],na.rm=TRUE)
+   tmp = mean(shootmass_diff[i,6,],na.rm=TRUE)
    shoot_diag = c(shoot_diag,tmp) 
-   tmp = mean(total_assim_dmax_diff[i,i,],na.rm=TRUE)
+   tmp = mean(total_assim_dmax_diff[i,6,],na.rm=TRUE)
    Admax_diag= c(Admax_diag,tmp) 
 }
 csv_output = cbind(pod_diag,shoot_diag,Admax_diag)
-write.csv(csv_output,paste("diag_",CO2_case,".csv",sep=""))
+write.csv(csv_output,paste("vmax_",CO2_case,".csv",sep=""))
 
 ########################## plot layers' assimilation 
 
@@ -145,13 +192,13 @@ write.csv(csv_output,paste("diag_",CO2_case,".csv",sep=""))
 cbar_limit = c(-20,20)
 pdfname = paste("Fig_",CO2_case,"_layers_sunlit.pdf",sep="")
 var2plot = layer_assim_sunlit_diff  
-layers_contour(v_scaler,j_scaler,var2plot,cbar_limit,pdfname,no_layers,years)
+#layers_contour(v_scaler,j_scaler,var2plot,cbar_limit,pdfname,no_layers,years)
 
 #shaded assim, mean of daily max, layered
 cbar_limit = c(-20,20)
 pdfname = paste("Fig_",CO2_case,"_layers_shaded.pdf",sep="")
 var2plot = layer_assim_shaded_diff  
-layers_contour(v_scaler,j_scaler,var2plot,cbar_limit,pdfname,no_layers,years)
+#layers_contour(v_scaler,j_scaler,var2plot,cbar_limit,pdfname,no_layers,years)
 
 ########################## plot layers' Ci
 #cbar_limit = c(300,450)

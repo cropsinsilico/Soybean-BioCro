@@ -6,6 +6,8 @@ plot_contour<-function(x,y,data,var_name,cbar_limit){
     colnames(df) = c("vmax","jmax","z")
     v<-ggplot(df,aes(x=vmax,y=jmax,z=z,fill=z))+geom_contour_filled()+ 
        geom_tile()+
+       geom_contour(color = "black",bins = 15)+ 
+       geom_text_contour(stroke = 0.2,min.size = 2)+
        scale_fill_distiller(name=var_name,palette = "Spectral",limits = cbar_limit)+
        theme(axis.text=element_text(size=14),
              axis.title=element_text(size=14,face="bold"),
@@ -33,6 +35,59 @@ layers_contour<-function(x,y,var2plot,cbar_limit,pdf_name,no_layers,years){
 	dev.off()
 }
 
+barplot<-function(df,pdfname){
+   df <- within(df, CO2 <- factor(CO2,levels=names(sort(table(CO2),decreasing=FALSE))))
+   CO2_label = paste(unique(df$CO2),"ppm")
+   plot_list = list()
+   ynames = c("pod","shoot","A_dmax","A_dmean","A_sum")
+   ylimit = c(0,10)
+   for (i in 1:length(ynames)){
+   p <- ggplot(data=df, aes_string(x="year", y=ynames[i], fill="CO2")) +
+         geom_bar(stat="identity", position=position_dodge())+
+          coord_cartesian(ylim = ylimit)+
+          theme(axis.text=element_text(size=14),
+           axis.title=element_text(size=14,face="bold"),
+           legend.text=element_text(size=14),
+           legend.title=element_text(size=14))
+   # Use custom colors
+   p <- p + scale_fill_manual(values=c('blue','green','orange','grey'),labels = CO2_label)
+   plot_list[[i]] = p
+   }
+   pdf(pdfname,height = 16, width=24)
+   grid.arrange(grobs = plot_list,nrow=2,ncol=3)
+   dev.off()
+}
+
+gradient_desc<-function(x,y,z,optionx){
+	#start point
+	x0 = 1
+	y0 = 1
+	# Step size multiplier
+	alpha=0.001
+	num_iter = 100
+        x1 = x0
+        y1 = y0
+        h = 0.01
+        xygrid = expand.grid(x,y)
+        xy_trace = c()
+	for (i in 1:100) {
+            xp = c(x1,x1-h,x1+h)
+            yp = c(y1,y1-h,y1+h)
+            fxy= interp(xygrid$Var1,xygrid$Var2,z,xp,yp,linear=FALSE)
+            dzdx = (fxy$z[3,1]-fxy$z[2,1])/(2*h)
+            dzdy = (fxy$z[1,3]-fxy$z[1,2])/(2*h)
+            if(optionx==1){  #descent
+              x1 = x1 - alpha * dzdx 
+              y1 = y1 - alpha * dzdy
+            }else if(optionx==2){ #ascent
+              x1 = x1 + alpha * dzdx 
+              y1 = y1 + alpha * dzdy
+            }else{stop("no such option!")}
+            if(is.na(x1)| is.na(y1)| x1<min(x) | x1>max(x) | y1<min(y) | y1>max(y)) break
+            xy_trace = rbind(xy_trace,c(x1,y1))
+	}	
+     return(xy_trace)
+}
 
 profile_plot1<-function(y1,y2,no_layers,years,pdfname,v_use,j_use,v_scaler,j_scaler){
 	plot_list = list()
