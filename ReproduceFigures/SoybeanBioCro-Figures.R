@@ -1,4 +1,4 @@
-library(BioCro)
+library(BioCroSoyBean)
 library(ggplot2) # To ggplot functions
 library(reshape2) # For melt function
 library(data.table) # For first and last functions
@@ -8,8 +8,8 @@ library(data.table) # For first and last functions
 rm(list=ls())
 
 # Set working directory to location of this file
-this.dir <- dirname(parent.frame(2)$ofile)
-setwd(this.dir)
+#this.dir <- dirname(parent.frame(2)$ofile)
+#setwd(this.dir)
 
 # turn off warnings
 options(warn=-1)

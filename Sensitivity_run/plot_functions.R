@@ -89,6 +89,42 @@ gradient_desc<-function(x,y,z,optionx){
      return(xy_trace)
 }
 
+plot_diurnal<-function(y,years,months_gs,pdfname,v_use,j_use,v_scaler,j_scaler){
+#array(NaN,c(length(v_scaler),length(j_scaler),length(years),length(months_gs),24,2))
+ v_index = which(abs(v_scaler-v_use)<1e-10)
+ j_index = which(abs(j_scaler-j_use)<1e-10)
+ y1 = y[v_index,j_index,,,,]
+
+ plot_list = list()
+ fig_order = 1
+ x_hours = seq(0,23,by=1)
+ for (j in 1:length(months_gs)){
+ for (i in 1:length(years)){
+     y_mean = y1[i,j,,1]
+     y_std  = y1[i,j,,2]
+     df = data.frame(x_hours,y_mean,y_std)
+     p <- ggplot(df,aes(x=x_hours,y=y_mean))+
+          geom_line(size=1) +
+          geom_point(size=1.5)+
+#          geom_errorbar(aes(ymin=y_mean-y_std, ymax=y_mean+y_std), width=.2)+
+	  xlab("hours")+ylab("A_net")+
+          coord_cartesian(ylim = c(-10,20))+
+          theme(axis.text.x = element_text(face="bold", color="#993333", 
+                           size=16),
+               axis.text.y = element_text(face="bold", color="#993333", 
+                           size=16),
+               axis.title=element_text(size=14))
+     plot_list[[fig_order]] = p
+     fig_order = fig_order+1
+ } 
+ } 
+
+     no_rows = length(months_gs)
+     pdf(pdfname,height = 36, width=24)
+     grid.arrange(grobs = plot_list,nrow=no_rows,ncol=length(years))
+     dev.off()
+}
+
 profile_plot1<-function(y1,y2,no_layers,years,pdfname,v_use,j_use,v_scaler,j_scaler){
 	plot_list = list()
         fig_order = 1
