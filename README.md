@@ -6,7 +6,7 @@ The version of BioCro associated with this manuscript is included as a submodule
 
 `git clone --recurse-submodules https://github.com/cropsinsilico/Soybean-BioCro.git`
 
-See the [BioCro README](https://github.com/ebimodeling/biocro/tree/2a74fe1bac8fb2ba80917e9c561593ee8b33daea#readme) to install BioCro.
+See the [BioCro README](https://github.com/ebimodeling/biocro/tree/e999dd1a69ca83dc48ac918a17174b6156bc4a49#readme) to install BioCro.
 
 To run an example run of Soybean-BioCro use the following command after installing the BioCro package:
 
