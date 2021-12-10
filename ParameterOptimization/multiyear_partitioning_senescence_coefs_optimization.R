@@ -38,9 +38,9 @@ for (i in 1:length(year)) {
   
   weather.growingseason <- weather[sd.ind:hd.ind,]
   
-  soybean_optsolver[[i]] <- partial_gro_solver(soybean_initial_state, soybean_parameters, weather.growingseason,
-                                               soybean_steadystate_modules, soybean_derivative_modules, 
-                                               arg_names, soybean_solver_params)
+  soybean_optsolver[[i]] <- partial_run_biocro(soybean_initial_values, soybean_parameters, weather.growingseason,
+                                               soybean_direct_modules, soybean_differential_modules,
+                                               soybean_ode_solver, arg_names)
   
   ExpBiomass[[i]] <- read.csv(file=paste0('../Data/SoyFACE_data/',yr,'_ambient_biomass.csv'))
   colnames(ExpBiomass[[i]])<-c("DOY","Leaf","Stem","Pod")
@@ -93,6 +93,3 @@ max.iter <- 1000
 # Call DEoptim function to run optimization
 parVars <- c('multiyear_BioCro_optim','soybean_optsolver','ExpBiomass','numrows','weights','wts2','RootVals')
 optim_result<-DEoptim(fn=cost_func, lower=lowerlim, upper = upperlim, control=list(itermax=max.iter,parallelType=1,packages=c('BioCro'),parVar=parVars))
-
-stopCluster() #close parallel connections
-

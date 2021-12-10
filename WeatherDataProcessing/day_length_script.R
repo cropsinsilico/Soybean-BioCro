@@ -14,7 +14,7 @@ def_kick_strength = 0.8
 def_light_exp_at_zero = 10.0
 def_light_threshold = 60.0
 def_output_step_size = 1.0
-def_solver_method = "Gro_rkck54"
+def_solver_method = "boost_rkck54"
 def_tracker_rate = 4.6
 
 # Make a function to run the clock
@@ -63,7 +63,7 @@ run_biocro_clock <- function(
 	)
 	
 	# Run the simulation
-	result <- Gro_solver(poincare_clock_initial_state, poincare_clock_parameters, weather_data, poincare_clock_ss_modules, poincare_clock_deriv_modules, poincare_solver, verbose)
+	result <- run_biocro(poincare_clock_initial_state, poincare_clock_parameters, weather_data, poincare_clock_ss_modules, poincare_clock_deriv_modules, poincare_solver, verbose)
 	
 	# Return the result
 	return(result)
