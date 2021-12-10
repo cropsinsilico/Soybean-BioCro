@@ -31,8 +31,10 @@ ExpBiomass <- list()
 ExpBiomass.std <- list()
 ExpBiomass.elevCO2 <- list()
 ExpBiomass.std.elevCO2 <- list()
+LAI <- list()
+LAI.elevCO2 <- list()
 
-# for partial_gro_solver
+# for partial_run_biocro
 arg_names <- c('Catm') # atmospheric CO2 parameter
 params.ambient <- c(372) # ambient atmospheric CO2
 params.elevCO2 <- c(550) # elevated atmospheric CO2
@@ -50,9 +52,9 @@ for (i in 1:length(years)) {
   
   weather.growingseason[[i]] <- weather[sd.ind:hd.ind,]
 
-  soybean_solver <- partial_gro_solver(soybean_initial_state, soybean_parameters, weather.growingseason[[i]],
-                                       soybean_steadystate_modules, soybean_derivative_modules,
-                                       arg_names, soybean_solver_params)
+  soybean_solver <- partial_run_biocro(soybean_initial_values, soybean_parameters, weather.growingseason[[i]],
+                                       soybean_direct_modules, soybean_differential_modules,
+                                       soybean_ode_solver, arg_names)
   
   results[[i]] <- soybean_solver(params.ambient)
   results.elevCO2[[i]] <- soybean_solver(params.elevCO2)
@@ -68,11 +70,65 @@ for (i in 1:length(years)) {
   colnames(ExpBiomass.elevCO2[[i]])<-c("DOY","Leaf","Stem","Pod")
   colnames(ExpBiomass.std.elevCO2[[i]])<-c("DOY","Leaf","Stem","Pod")
   
+  # Load LAI data
+  if(i>1){
+    LAI[[i]]<-read.csv(file=paste0('../Data/SoyFACE_data/',yr,'_ambient_lai.csv'))
+    LAI.elevCO2[[i]]<-read.csv(file=paste0('../Data/SoyFACE_data/',yr,'_elevated_lai.csv'))
+  }
+  
 }
 
 
 
 # Define functions to create plots
+plot_amb_elev_lai <- function(res, elev_res, year, lai, elev_lai) {
+  
+  # Colorblind friendly color palette (https://personal.sron.nl/~pault/)
+  col.palette.muted <- c("#332288", "#117733", "#999933", "#882255")
+  
+  size.title <- 12
+  size.axislabel <-10
+  size.axis <- 10
+  size.legend <- 12
+  
+  s.lai <- cbind(res[,c("time","lai")],elev_res[,"lai"])
+  colnames(s.lai) <- c("time","Amb","Elev")
+  r.lai <- reshape2::melt(s.lai, id.vars = "time")
+  
+  s.exp.lai <- cbind(lai[,c("DOY","LAI_mean")],elev_lai[,"LAI_mean"])
+  colnames(s.exp.lai) <- c("DOY","Amb","Elev")
+  r.exp.lai <- reshape2::melt(s.exp.lai, id.vars = "DOY")
+  
+  s.exp.std.lai <- cbind(lai[,c("DOY","LAI_std")],elev_lai[,"LAI_std"])
+  colnames(s.exp.std.lai) <- c("DOY","Amb","Elev")
+  r.exp.std.lai <- reshape2::melt(s.exp.std.lai, id.vars = "DOY")
+  r.exp.std.lai$ymin <- r.exp.lai$value - r.exp.std.lai$value
+  r.exp.std.lai$ymax <- r.exp.lai$value + r.exp.std.lai$value
+  
+  f <- ggplot() + theme_classic()
+  f <- f + geom_point(data=r.lai, aes(x=time, y=value, colour=variable),show.legend = FALSE,size=0.25)
+  f <- f + geom_errorbar(data=r.exp.std.lai, aes(x=DOY, ymin=ymin, ymax=ymax), width=3.5, size=0.25, show.legend = FALSE)
+  f <- f + geom_point(data=r.exp.lai, aes(x=DOY, y=value, fill=variable), shape=22, size=2, show.legend = FALSE, stroke=.5)
+  f <- f + coord_cartesian(ylim = c(0,10)) + scale_x_continuous(breaks = seq(150,275,30))
+  f <- f + labs(x=paste0('Day of Year (',year,')'),y=bquote("LAI"~(m^2~"/"~m^2)))
+  f <- f + theme(plot.title=element_text(size=size.title, hjust=0.5),
+                 axis.text=element_text(size=size.axis),
+                 axis.title=element_text(size=size.axislabel),
+                 legend.position = c(.25,.85), legend.title = element_blank(),
+                 legend.text=element_text(size=size.legend),
+                 legend.background = element_rect(fill = "transparent",colour = NA),
+                 panel.grid.major = element_blank(),
+                 panel.grid.minor = element_blank(), panel.background = element_rect(fill = "transparent",colour = NA),
+                 plot.background = element_rect(fill = "transparent", colour = NA))
+  f <- f + guides(colour = guide_legend(override.aes = list(size=2)))
+  f <- f + scale_fill_manual(values = col.palette.muted[2:3], guide = "none")
+  f <- f + scale_colour_manual(values = col.palette.muted[2:3],labels=c('Ambient',bquote(Elevated~CO[2])))
+  
+  return(f)
+  
+}
+
+
 plot_all_tissues <- function(res, year, biomass, biomass.std) {
   
   r <- reshape2::melt(res[, c("time","Root","Leaf","Stem","Grain")], id.vars="time")
@@ -371,27 +427,38 @@ ggsave(filename = paste0("./figs/Fig2H.pdf"),width=3.5,height=2.8,units="in",bg=
 Fig2L <- plot_amb_elev_pod(results[[i]], results.elevCO2[[i]], years[i], ExpBiomass[[i]], ExpBiomass.std[[i]], ExpBiomass.elevCO2[[i]], ExpBiomass.std.elevCO2[[i]], 0)
 ggsave(filename = paste0("./figs/Fig2L.pdf"),width=3.5,height=2.8,units="in",bg='transparent')
 
-
-# Reproduce Fig 3
-i<-1 # 2002
-Fig3A <- plot_temps(results[[i]], years[[i]])
+# Reproduce Figure 3
+i<-2 # 2004
+Fig3A <- plot_amb_elev_lai(results[[i]], results.elevCO2[[i]], years[[i]], LAI[[i]], LAI.elevCO2[[i]])
 ggsave(filename = paste0("./figs/Fig3A.pdf"),width=3.5,height=2.8,units="in",bg='transparent')
 
-i<-2 # 2004
-Fig3B <- plot_temps(results[[i]], years[[i]])
+i<-3 # 2005
+Fig3B <- plot_amb_elev_lai(results[[i]], results.elevCO2[[i]], years[[i]], LAI[[i]], LAI.elevCO2[[i]])
 ggsave(filename = paste0("./figs/Fig3B.pdf"),width=3.5,height=2.8,units="in",bg='transparent')
 
-Fig3E <- plot_amb_elev_pod(results[[i]], results.elevCO2[[i]], years[i], ExpBiomass[[i]], ExpBiomass.std[[i]], ExpBiomass.elevCO2[[i]], ExpBiomass.std.elevCO2[[i]], 1)
-ggsave(filename = paste0("./figs/Fig3E.pdf"),width=3.5,height=2.8,units="in",bg='transparent')
-
-i<-3 # 2005
-Fig3C <- plot_temps(results[[i]], years[[i]])
+i<-4 # 2006
+Fig3C <- plot_amb_elev_lai(results[[i]], results.elevCO2[[i]], years[[i]], LAI[[i]], LAI.elevCO2[[i]])
 ggsave(filename = paste0("./figs/Fig3C.pdf"),width=3.5,height=2.8,units="in",bg='transparent')
 
-i<-4 # 2006
-Fig3D <- plot_temps(results[[i]], years[[i]])
-ggsave(filename = paste0("./figs/Fig3D.pdf"),width=3.5,height=2.8,units="in",bg='transparent')
+# Reproduce Fig 4
+i<-1 # 2002
+Fig4A <- plot_temps(results[[i]], years[[i]])
+ggsave(filename = paste0("./figs/Fig4A.pdf"),width=3.5,height=2.8,units="in",bg='transparent')
 
+i<-2 # 2004
+Fig4B <- plot_temps(results[[i]], years[[i]])
+ggsave(filename = paste0("./figs/Fig4B.pdf"),width=3.5,height=2.8,units="in",bg='transparent')
+
+Fig4E <- plot_amb_elev_pod(results[[i]], results.elevCO2[[i]], years[i], ExpBiomass[[i]], ExpBiomass.std[[i]], ExpBiomass.elevCO2[[i]], ExpBiomass.std.elevCO2[[i]], 1)
+ggsave(filename = paste0("./figs/Fig4E.pdf"),width=3.5,height=2.8,units="in",bg='transparent')
+
+i<-3 # 2005
+Fig4C <- plot_temps(results[[i]], years[[i]])
+ggsave(filename = paste0("./figs/Fig4C.pdf"),width=3.5,height=2.8,units="in",bg='transparent')
+
+i<-4 # 2006
+Fig4D <- plot_temps(results[[i]], years[[i]])
+ggsave(filename = paste0("./figs/Fig4D.pdf"),width=3.5,height=2.8,units="in",bg='transparent')
 
 # return warnings to default
 options(warn=0)
