@@ -38,9 +38,10 @@ for (i in 1:length(year)) {
   
   weather.growingseason <- weather[sd.ind:hd.ind,]
   
-  soybean_optsolver[[i]] <- partial_run_biocro(soybean_initial_values, soybean_parameters, weather.growingseason,
-                                               soybean_direct_modules, soybean_differential_modules,
-                                               soybean_ode_solver, arg_names)
+  soybean$initial_values$time_zone_offset <- -6
+  soybean_optsolver[[i]] <- partial_run_biocro(soybean$initial_values, soybean$parameters, weather.growingseason,
+                                               soybean$direct_modules, soybean$differential_modules,
+                                               soybean$ode_solver, arg_names)
   
   ExpBiomass[[i]] <- read.csv(file=paste0('../Data/SoyFACE_data/',yr,'_ambient_biomass.csv'))
   colnames(ExpBiomass[[i]])<-c("DOY","Leaf","Stem","Pod")
