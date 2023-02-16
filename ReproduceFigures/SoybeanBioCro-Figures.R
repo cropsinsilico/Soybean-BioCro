@@ -51,10 +51,10 @@ for (i in 1:length(years)) {
   hd.ind <- which(weather$doy == harvestdate)[24] # end of harvest day
   
   weather.growingseason[[i]] <- weather[sd.ind:hd.ind,]
-
-  soybean_solver <- partial_run_biocro(soybean_initial_values, soybean_parameters, weather.growingseason[[i]],
-                                       soybean_direct_modules, soybean_differential_modules,
-                                       soybean_ode_solver, arg_names)
+  soybean$initial_values$time_zone_offset <- -6
+  soybean_solver <- partial_run_biocro(soybean$initial_values, soybean$parameters, weather.growingseason[[i]],
+                                       soybean$direct_modules, soybean$differential_modules,
+                                       soybean$ode_solver, arg_names)
   
   results[[i]] <- soybean_solver(params.ambient)
   results.elevCO2[[i]] <- soybean_solver(params.elevCO2)
@@ -72,8 +72,8 @@ for (i in 1:length(years)) {
   
   # Load LAI data
   if(i>1){
-    LAI[[i]]<-read.csv(file=paste0('../Data/SoyFACE_data/',yr,'_ambient_lai.csv'))
-    LAI.elevCO2[[i]]<-read.csv(file=paste0('../Data/SoyFACE_data/',yr,'_elevated_lai.csv'))
+    LAI[[i]]<-read.csv(file=paste0('../Data/SoyFACE_data/',yr,'_ambient_lai.csv'), fileEncoding = 'UTF-8-BOM')
+    LAI.elevCO2[[i]]<-read.csv(file=paste0('../Data/SoyFACE_data/',yr,'_elevated_lai.csv'), fileEncoding = 'UTF-8-BOM')
   }
   
 }
