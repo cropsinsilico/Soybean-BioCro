@@ -1,4 +1,5 @@
 # Soybean-BioCro
+<b>Note 10/9/24: Updated versions of Soybean-BioCro can be found as part of the main BioCro repository [github](https://github.com/biocro/biocro) [CRAN](https://cran.r-project.org/web/packages/BioCro/index.html)</b>
 
 The code in this repository reproduces the results in Matthews et al. Soybean-BioCro: a semi-mechanistic model of soybean growth. <i>in silico</i> Plants. https://doi.org/10.1093/insilicoplants/diab032
 
